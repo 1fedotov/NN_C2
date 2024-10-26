@@ -6,19 +6,14 @@
 
 int swap_bytes(int i)
 {
-	void* addr = &i; // get an adress of the first byte of the integer
-	char* buff = static_cast<char*>(addr); // treat the integer as a sequence of bytes
-	int result = 0;
+	unsigned char* addr = (unsigned char*) & i; // get an address of the first byte of an integer
 
 	// swap bytes 0 1 2 3 -> 3 2 1 0
-	char c = buff[0];
-	buff[0] = buff[3];
-	buff[3] = c;
-	c = buff[1];
-	buff[1] = buff[2];
-	buff[2] = c;
 
-	return i;
+	return (0 + (addr[0] << 24)
+			  + (addr[1] << 16)
+			  + (addr[2] << 8)
+			  +  addr[3]);
 }
 
 //implementation of the MNIST dataset loader
@@ -26,7 +21,7 @@ int swap_bytes(int i)
 void mnist_loader::load(const std::string& train_images_path, const std::string& train_labels_path, 
 	const std::string& test_images_path, const std::string& test_labels_path)
 {
-	std::vector<std::pair<int, std::vector<uint8_t>>> train_data;
+	std::vector<std::pair<int, std::vector<int>>> train_data;
 
 	std::ifstream train_images(train_images_path, std::ios::binary);
 	std::ifstream train_labels(train_labels_path, std::ios::binary);
@@ -79,16 +74,16 @@ void mnist_loader::load(const std::string& train_images_path, const std::string&
 			train_labels.read(&c, sizeof(c));
 			train_images.read(buff, sizeof(buff));
 
-			std::vector<uint8_t> image;
+			std::vector<int> image;
 			image.reserve(size);
+
 
 			for (int j = 0; j < imagesHeader.row_num * imagesHeader.col_num; j++)
 			{
-				image.push_back((uint8_t)(buff + j));
+				image.push_back((int)(unsigned char)(buff + j));
 			}
 
 			train_data.push_back(std::make_pair((int)c, image));
-			//std::cout << i << " pair is read\n";
 		}
 
 		delete[] buff;
@@ -100,14 +95,4 @@ void mnist_loader::load(const std::string& train_images_path, const std::string&
 
 	train_images.close();
 	train_labels.close();
-
-	std::cout << "Number of pairs loaded:" << train_data.size() << "\n";
-
-	std::vector<uint8_t> image = train_data[0].second;
-	std::cout << "image pixels: " << image.size() << "\n";
-	for (int i = 0; i < image.size(); i++)
-	{
-		if (i % 28 == 0 && i != 0) std::cout << "\n";
-		std::cout << (int)image[i] << " ";
-	}
 }
