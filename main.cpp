@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include "mnist_loader.h"
 #include "network.h"
 
@@ -12,7 +13,10 @@ int main() {
 
 	mnist_loader loader;
 
-	loader.load(TRAIN_IMAGES_PATH, TRAIN_LABELS_PATH, TEST_IMAGES_PATH, TEST_LABELS_PATH);
+	//loader.load(TRAIN_IMAGES_PATH, TRAIN_LABELS_PATH, TEST_IMAGES_PATH, TEST_LABELS_PATH);
+
+	network Network(std::vector<int> {2, 10, 3});
+	Network.log();
 
 	return 0;
 }
