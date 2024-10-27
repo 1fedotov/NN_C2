@@ -15,8 +15,20 @@ int main() {
 
 	//loader.load(TRAIN_IMAGES_PATH, TRAIN_LABELS_PATH, TEST_IMAGES_PATH, TEST_LABELS_PATH);
 
-	network Network(std::vector<int> {2, 10, 3});
-	Network.log();
+	network Network(std::vector<int> {784, 30, 9});
+
+	Network.print_weights(0);
+	Network.print_biases(0);
+	Network.print_weights(1);
+	Network.print_biases(1);
+
+	Network.populate(-3.0, 3.0);
+
+	Network.print_weights(0);
+	Network.print_biases(0);
+	Network.print_weights(1);
+	Network.print_biases(1);
+
 
 	return 0;
 }

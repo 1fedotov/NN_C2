@@ -22,9 +22,13 @@ class network
 		network(std::vector<int> layers_vec);
 
 		// Populate network's weights and biases with random
-		void populate();
+		void populate(float min, float max);
 
 		// For debug purposes, shows the weights and biases for the 1 deep layer
 		void log();
+
+		void print_weights(int layer);
+
+		void print_biases(int layer);
 };
 
