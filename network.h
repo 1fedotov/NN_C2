@@ -24,6 +24,10 @@ class network
 		// Populate network's weights and biases with random
 		void populate(float min, float max);
 
+		std::vector<float> feedforward(std::vector<int> input);
+
+		void backpropagate(std::vector<float> a, int y);
+
 		// For debug purposes, shows the weights and biases for the 1 deep layer
 		void log();
 

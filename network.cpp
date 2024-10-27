@@ -61,6 +61,11 @@ void network::populate(float min, float max)
 	}
 }
 
+std::vector<float> network::feedforward(std::vector<int> input)
+{
+	return std::vector<float>();
+}
+
 void network::log()
 {
 	std::cout << "Number of layers: " << layers.size() << "\n";

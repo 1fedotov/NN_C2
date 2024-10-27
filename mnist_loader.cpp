@@ -21,7 +21,7 @@ int swap_bytes(int i)
 void mnist_loader::load(const std::string& train_images_path, const std::string& train_labels_path, 
 	const std::string& test_images_path, const std::string& test_labels_path)
 {
-	std::vector<std::pair<int, std::vector<int>>> train_data;
+	std::vector<std::pair<std::vector<float>, std::vector<int>>> train_data;
 
 	std::ifstream train_images(train_images_path, std::ios::binary);
 	std::ifstream train_labels(train_labels_path, std::ios::binary);
@@ -64,15 +64,13 @@ void mnist_loader::load(const std::string& train_images_path, const std::string&
 		char* buff = new char[size];
 		train_data.reserve(sizeof(size));
 
-		std::cout << "row num: " << imagesHeader.row_num << " ";
-		std::cout << "col num: " << imagesHeader.col_num << "\n";
-
-		std::cout << "size of buffer: " << size << "\n";
-
 		for (int i = 0; i < imagesHeader.items_num; i++)
 		{
 			train_labels.read(&c, sizeof(c));
 			train_images.read(buff, sizeof(buff));
+
+			std::vector<float> label(10, 0);
+			label[int(c)] = 1;
 
 			std::vector<int> image;
 			image.reserve(size);
@@ -83,7 +81,7 @@ void mnist_loader::load(const std::string& train_images_path, const std::string&
 				image.push_back((int)(unsigned char)(buff + j));
 			}
 
-			train_data.push_back(std::make_pair((int)c, image));
+			train_data.push_back(std::make_pair(label, image));
 		}
 
 		delete[] buff;
