@@ -2,7 +2,6 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <tuple>
 
 int swap_bytes(int i)
 {
@@ -18,10 +17,10 @@ int swap_bytes(int i)
 
 //implementation of the MNIST dataset loader
 
-void mnist_loader::load(const std::string& train_images_path, const std::string& train_labels_path, 
+std::vector<std::pair<std::vector<float>, std::vector<float>>> mnist_loader::load(const std::string& train_images_path, const std::string& train_labels_path,
 	const std::string& test_images_path, const std::string& test_labels_path)
 {
-	std::vector<std::pair<std::vector<float>, std::vector<int>>> train_data;
+	std::vector<std::pair<std::vector<float>, std::vector<float>>> train_data;
 
 	std::ifstream train_images(train_images_path, std::ios::binary);
 	std::ifstream train_labels(train_labels_path, std::ios::binary);
@@ -72,13 +71,13 @@ void mnist_loader::load(const std::string& train_images_path, const std::string&
 			std::vector<float> label(10, 0);
 			label[int(c)] = 1;
 
-			std::vector<int> image;
+			std::vector<float> image;
 			image.reserve(size);
 
 
 			for (int j = 0; j < imagesHeader.row_num * imagesHeader.col_num; j++)
 			{
-				image.push_back((int)(unsigned char)(buff + j));
+				image.push_back((float)(unsigned char)(buff + j));
 			}
 
 			train_data.push_back(std::make_pair(label, image));
@@ -93,4 +92,6 @@ void mnist_loader::load(const std::string& train_images_path, const std::string&
 
 	train_images.close();
 	train_labels.close();
+
+	return train_data;
 }

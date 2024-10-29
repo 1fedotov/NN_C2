@@ -13,22 +13,28 @@ int main() {
 
 	mnist_loader loader;
 
-	//loader.load(TRAIN_IMAGES_PATH, TRAIN_LABELS_PATH, TEST_IMAGES_PATH, TEST_LABELS_PATH);
+	std::vector<std::pair<std::vector<float>, std::vector<float>>> train_data = loader.load(TRAIN_IMAGES_PATH, TRAIN_LABELS_PATH, TEST_IMAGES_PATH, TEST_LABELS_PATH);
 
 	network Network(std::vector<int> {784, 30, 9});
 
-	Network.print_weights(0);
-	Network.print_biases(0);
-	Network.print_weights(1);
-	Network.print_biases(1);
+	//Network.print_weights(0);
+	//Network.print_biases(0);
+	//Network.print_weights(1);
+	//Network.print_biases(1);
 
 	Network.populate(-3.0, 3.0);
 
-	Network.print_weights(0);
-	Network.print_biases(0);
-	Network.print_weights(1);
-	Network.print_biases(1);
+	//Network.print_weights(0);
+	//Network.print_biases(0);
+	//Network.print_weights(1);
+	//Network.print_biases(1);
 
+	std::vector<float> output = Network.feedforward(train_data[0].second);
+
+	for (int i = 0; i < output.size(); i++)
+	{
+		std::cout << i <<" output: " << output[i] << "\n";
+	}
 
 	return 0;
 }

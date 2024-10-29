@@ -3,6 +3,7 @@
 #include "network.h"
 #include "algorithm"
 #include "random"
+#include "util.h"
 
 network::network(std::vector<int> layers_vec)
 {
@@ -61,9 +62,37 @@ void network::populate(float min, float max)
 	}
 }
 
-std::vector<float> network::feedforward(std::vector<int> input)
+std::vector<float> network::feedforward(std::vector<float> input)
 {
-	return std::vector<float>();
+	std::vector<float> a = input;
+
+	// Go through each layer in network, i'th layer
+	for (int i = 0; i < biases.size(); i++)
+	{
+		std::vector<float> buff;
+
+		// Go through each neuron in a layer, j'th neuron
+		for (int j = 0; j < biases[i].size(); j++)
+		{
+			float dot_prod = 0;
+
+			if (a.size() != weights[i][j].size())
+			{
+				throw "Feedforward error! Input size not equal weights";
+			}
+
+			// Go through each neuron's weight corresponding to the input 
+			// from the previous layer neuron, k'th neuron
+			for (int k = 0; k < weights[i][j].size(); k++)
+			{
+				dot_prod += a[k] * weights[i][j][k];
+			}
+			float z = dot_prod + biases[i][j];
+			buff.push_back(sigmoid(z));
+		}
+		a = buff;
+	}
+	return a;
 }
 
 void network::log()

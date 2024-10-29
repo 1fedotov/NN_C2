@@ -14,7 +14,6 @@ class network
 		std::vector<int> layers;
 		std::vector<std::vector<std::vector<float>>> weights;
 		std::vector<std::vector<float>> biases;
-		std::vector<float>* a;
 
 	public:
 		// Initialize network with weights tensor and biases matrix, all values are 0's
@@ -24,7 +23,7 @@ class network
 		// Populate network's weights and biases with random
 		void populate(float min, float max);
 
-		std::vector<float> feedforward(std::vector<int> input);
+		std::vector<float> feedforward(std::vector<float> input);
 
 		void backpropagate(std::vector<float> a, int y);
 
