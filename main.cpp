@@ -13,7 +13,8 @@ int main() {
 
 	mnist_loader loader;
 
-	std::vector<std::pair<std::vector<float>, std::vector<float>>> train_data = loader.load(TRAIN_IMAGES_PATH, TRAIN_LABELS_PATH, TEST_IMAGES_PATH, TEST_LABELS_PATH);
+	std::vector<std::pair<std::vector<float>, std::vector<float>>> train_data = loader.load(TRAIN_IMAGES_PATH, TRAIN_LABELS_PATH);
+	std::vector<std::pair<std::vector<float>, std::vector<float>>> test_data = loader.load(TEST_IMAGES_PATH, TEST_LABELS_PATH);
 
 	network Network(std::vector<int> {784, 30, 9});
 

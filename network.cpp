@@ -81,7 +81,7 @@ std::vector<float> network::feedforward(std::vector<float> input)
 				throw "Feedforward error! Input size not equal weights";
 			}
 
-			// Go through each neuron's weight corresponding to the input 
+			// Go through i'th neuron's weights corresponding to the input 
 			// from the previous layer neuron, k'th neuron
 			for (int k = 0; k < weights[i][j].size(); k++)
 			{
@@ -93,6 +93,42 @@ std::vector<float> network::feedforward(std::vector<float> input)
 		a = buff;
 	}
 	return a;
+}
+
+void network::SGD(std::vector<dataUnit> train_data, int epochs, int mini_batch_size, float eta)
+{
+	int n = train_data.size();
+	for (int i = 0; i < epochs; i++)
+	{
+		std::default_random_engine eng;
+		std::shuffle(train_data.begin(), train_data.end(), eng);
+
+		std::vector<std::vector<dataUnit>> mini_batches;
+
+		for (int j = 0; j < n / mini_batch_size; j++)
+		{
+			std::vector<dataUnit> mini_batch;
+			for (int k = 0; k < mini_batch_size; k++)
+			{
+				mini_batch.push_back(train_data[k + mini_batch_size * j]);
+			}
+			mini_batches.push_back(mini_batch);
+		}
+
+		for (int j = 0; j < mini_batches.size(); j++)
+		{
+			update_mini_batch(mini_batches[j], eta);
+		}
+
+	}
+}
+
+void network::update_mini_batch(std::vector<dataUnit> mini_batch, float eta)
+{
+}
+
+void network::backpropagate(std::vector<float> a, int y)
+{
 }
 
 void network::log()

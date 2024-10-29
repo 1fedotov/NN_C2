@@ -17,8 +17,7 @@ int swap_bytes(int i)
 
 //implementation of the MNIST dataset loader
 
-std::vector<std::pair<std::vector<float>, std::vector<float>>> mnist_loader::load(const std::string& train_images_path, const std::string& train_labels_path,
-	const std::string& test_images_path, const std::string& test_labels_path)
+std::vector<std::pair<std::vector<float>, std::vector<float>>> mnist_loader::load(const std::string& train_images_path, const std::string& train_labels_path)
 {
 	std::vector<std::pair<std::vector<float>, std::vector<float>>> train_data;
 

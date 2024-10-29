@@ -1,5 +1,7 @@
 #pragma once
 
+typedef std::pair<std::vector<float>, std::vector<float>> dataUnit;
+
 class network
 {
 	private:
@@ -24,6 +26,10 @@ class network
 		void populate(float min, float max);
 
 		std::vector<float> feedforward(std::vector<float> input);
+
+		void SGD(std::vector<dataUnit> train_data, int epochs, int mini_batch_size, float eta);
+
+		void update_mini_batch(std::vector<dataUnit> mini_batch, float eta);
 
 		void backpropagate(std::vector<float> a, int y);
 
