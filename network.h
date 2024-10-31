@@ -1,6 +1,10 @@
 #pragma once
+#include <vector>
 
+// pair<label, image> dataUnit
 typedef std::pair<std::vector<float>, std::vector<float>> dataUnit;
+typedef std::vector<std::vector<float>> weightMatrix;
+typedef std::vector<float> biasesVec;
 
 class network
 {
@@ -14,8 +18,8 @@ class network
 		*/
 
 		std::vector<int> layers;
-		std::vector<std::vector<std::vector<float>>> weights;
-		std::vector<std::vector<float>> biases;
+		std::vector<weightMatrix> weights;
+		std::vector<biasesVec> biases;
 
 	public:
 		// Initialize network with weights tensor and biases matrix, all values are 0's
@@ -31,7 +35,7 @@ class network
 
 		void update_mini_batch(std::vector<dataUnit> mini_batch, float eta);
 
-		void backpropagate(std::vector<float> a, int y);
+		std::pair<std::vector<biasesVec>, std::vector<weightMatrix>> backpropagate(dataUnit& train_data);
 
 		// For debug purposes, shows the weights and biases for the 1 deep layer
 		void log();

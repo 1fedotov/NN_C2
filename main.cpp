@@ -29,13 +29,8 @@ int main() {
 	//Network.print_biases(0);
 	//Network.print_weights(1);
 	//Network.print_biases(1);
-
-	std::vector<float> output = Network.feedforward(train_data[0].second);
-
-	for (int i = 0; i < output.size(); i++)
-	{
-		std::cout << i <<" output: " << output[i] << "\n";
-	}
+	Network.SGD(train_data, 30, 10, 3.0);
+	
 
 	return 0;
 }
