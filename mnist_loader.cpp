@@ -76,7 +76,8 @@ std::vector<std::pair<std::vector<float>, std::vector<float>>> mnist_loader::loa
 
 			for (int j = 0; j < imagesHeader.row_num * imagesHeader.col_num; j++)
 			{
-				image.push_back((float)(unsigned char)(buff + j));
+				float f = (float)(unsigned char)(buff + j);
+				image.push_back(f/255.0);
 			}
 
 			train_data.push_back(std::make_pair(label, image));

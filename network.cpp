@@ -37,8 +37,9 @@ network::network(std::vector<int> layers_vec)
 
 void network::populate(float min, float max)
 {
-	std::default_random_engine eng;
-	std::uniform_real_distribution<float> dist(min, max);
+	std::random_device rd;
+	std::default_random_engine eng(rd());
+	std::normal_distribution<float> dist(0.0, 1.0);
 
 	// populate weights
 	for (int i = 0; i < weights.size(); i++)
@@ -62,7 +63,7 @@ void network::populate(float min, float max)
 	}
 }
 
-std::vector<float> network::feedforward(std::vector<float> input)
+std::vector<float> network::feedforward(const std::vector<float>& input)
 {
 	std::vector<float> a = input;
 
@@ -81,7 +82,7 @@ std::vector<float> network::feedforward(std::vector<float> input)
 				throw "Feedforward error! Input size not equal weights";
 			}
 
-			// Go through i'th neuron's weights corresponding to the input 
+			// Go through j'th neuron's weights corresponding to the input 
 			// from the previous layer neuron, k'th neuron
 			for (int k = 0; k < weights[i][j].size(); k++)
 			{
@@ -95,8 +96,11 @@ std::vector<float> network::feedforward(std::vector<float> input)
 	return a;
 }
 
-void network::SGD(std::vector<dataUnit> train_data, int epochs, int mini_batch_size, float eta)
+void network::SGD(std::vector<dataUnit>& train_data, int epochs, int mini_batch_size, float eta, const std::vector<dataUnit>* test_data)
 {
+	
+	int n_test = test_data ? test_data->size() : 0;
+
 	int n = train_data.size();
 	for (int i = 0; i < epochs; i++)
 	{
@@ -120,11 +124,18 @@ void network::SGD(std::vector<dataUnit> train_data, int epochs, int mini_batch_s
 			update_mini_batch(mini_batches[j], eta);
 		}
 
-		printf("Epoch %i complete\n", i);
+		if (test_data)
+		{
+			printf("Epoch %i: %i / %i\n", i, evaluate(*test_data), n_test);
+		}
+		else
+		{
+			printf("Epoch %i complete\n", i);
+		}
 	}
 }
 
-void network::update_mini_batch(std::vector<dataUnit> mini_batch, float eta)
+void network::update_mini_batch(const std::vector<dataUnit>& mini_batch, float eta)
 {
 	// create buffers for weights' and biases' nablas
 	auto nabla_b = create_shape(biases);
@@ -160,7 +171,7 @@ void network::update_mini_batch(std::vector<dataUnit> mini_batch, float eta)
 
 }
 
-std::pair<std::vector<biasesVec>, std::vector<weightMatrix>> network::backpropagate(dataUnit& train_data)
+std::pair<std::vector<biasesVec>, std::vector<weightMatrix>> network::backpropagate(const dataUnit& train_data)
 {
 	// create buffers for weights' and biases' nablas
 	auto nabla_b = create_shape(biases);
@@ -202,7 +213,7 @@ std::pair<std::vector<biasesVec>, std::vector<weightMatrix>> network::backpropag
 	delta.reserve(activations.back().size());
 	for (int i = 0; i < activations.back().size(); i++)
 	{
-		delta.push_back(cost_deriv(activations.back()[i], train_data.first[i]));
+		delta.push_back(cost_deriv(activations.back()[i], train_data.first[i]) * sigmoid_deriv(zs.back()[i]));
 	}
 	
 	for (int i = 0; i < nabla_b.back().size(); i++)
@@ -260,6 +271,30 @@ std::pair<std::vector<biasesVec>, std::vector<weightMatrix>> network::backpropag
 
 	return std::make_pair(nabla_b, nabla_w);
 
+}
+
+int network::evaluate(const std::vector<dataUnit>& test_data)
+{
+	int count = 0;
+	for (int i = 0; i < test_data.size(); i++)
+	{
+		std::vector<float> result(feedforward(test_data[i].second));
+		float rmax = 0;
+		int idx = -1;
+		int label = 0;
+		for (int j = 0; j < result.size(); j++)
+		{
+			if (result[j] > rmax)
+			{
+				rmax = result[j];
+				idx = j;
+			}
+
+			if (test_data[i].first[j] == 1) label = j;
+		}
+		if (idx == label) count++;
+	}
+	return count;
 }
 
 void network::log()

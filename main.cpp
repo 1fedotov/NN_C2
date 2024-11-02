@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <chrono>
 #include "mnist_loader.h"
 #include "network.h"
 
@@ -9,27 +10,27 @@
 #define TEST_LABELS_PATH "mnist/t10k-labels.idx1-ubyte"
 
 int main() {
-	std::cout << "hello, world!\n";
-
 	mnist_loader loader;
+
 
 	std::vector<std::pair<std::vector<float>, std::vector<float>>> train_data = loader.load(TRAIN_IMAGES_PATH, TRAIN_LABELS_PATH);
 	std::vector<std::pair<std::vector<float>, std::vector<float>>> test_data = loader.load(TEST_IMAGES_PATH, TEST_LABELS_PATH);
 
-	network Network(std::vector<int> {784, 30, 9});
+	network Network(std::vector<int> {784, 30, 10});
 
 	//Network.print_weights(0);
 	//Network.print_biases(0);
 	//Network.print_weights(1);
 	//Network.print_biases(1);
 
-	Network.populate(-3.0, 3.0);
+	Network.populate(0.0, 0.5);
 
 	//Network.print_weights(0);
 	//Network.print_biases(0);
 	//Network.print_weights(1);
 	//Network.print_biases(1);
-	Network.SGD(train_data, 30, 10, 3.0);
+
+	Network.SGD(train_data, 30, 10, 3.0, &test_data);
 	
 
 	return 0;

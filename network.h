@@ -29,13 +29,15 @@ class network
 		// Populate network's weights and biases with random
 		void populate(float min, float max);
 
-		std::vector<float> feedforward(std::vector<float> input);
+		std::vector<float> feedforward(const std::vector<float>& input);
 
-		void SGD(std::vector<dataUnit> train_data, int epochs, int mini_batch_size, float eta);
+		void SGD(std::vector<dataUnit>& train_data, int epochs, int mini_batch_size, float eta, const std::vector<dataUnit>* test_data = nullptr);
 
-		void update_mini_batch(std::vector<dataUnit> mini_batch, float eta);
+		void update_mini_batch(const std::vector<dataUnit>& mini_batch, float eta);
 
-		std::pair<std::vector<biasesVec>, std::vector<weightMatrix>> backpropagate(dataUnit& train_data);
+		std::pair<std::vector<biasesVec>, std::vector<weightMatrix>> backpropagate(const dataUnit& train_data);
+
+		int evaluate(const std::vector<dataUnit>& test_data);
 
 		// For debug purposes, shows the weights and biases for the 1 deep layer
 		void log();
