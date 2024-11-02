@@ -15,7 +15,6 @@ network::network(std::vector<int> layers_vec)
 	for (int i = 1; i < layers.size(); i++)
 	{
 		std::vector<std::vector<float>> matrix;
-		//matrix.reserve(layers[i] * sizeof(float));
 
 		for (int j = 0; j < layers[i]; j++)
 		{

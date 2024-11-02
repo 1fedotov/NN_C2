@@ -65,7 +65,7 @@ std::vector<std::pair<std::vector<float>, std::vector<float>>> mnist_loader::loa
 		for (int i = 0; i < imagesHeader.items_num; i++)
 		{
 			train_labels.read(&c, sizeof(c));
-			train_images.read(buff, sizeof(buff));
+			train_images.read(buff, size);
 
 			std::vector<float> label(10, 0);
 			label[int(c)] = 1;
@@ -74,9 +74,9 @@ std::vector<std::pair<std::vector<float>, std::vector<float>>> mnist_loader::loa
 			image.reserve(size);
 
 
-			for (int j = 0; j < imagesHeader.row_num * imagesHeader.col_num; j++)
+			for (int j = 0; j < size; j++)
 			{
-				float f = (float)(unsigned char)(buff + j);
+				float f = (float)(unsigned char)buff[j];
 				image.push_back(f/255.0);
 			}
 

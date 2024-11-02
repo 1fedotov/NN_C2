@@ -18,17 +18,7 @@ int main() {
 
 	network Network(std::vector<int> {784, 30, 10});
 
-	//Network.print_weights(0);
-	//Network.print_biases(0);
-	//Network.print_weights(1);
-	//Network.print_biases(1);
-
-	Network.populate(0.0, 0.5);
-
-	//Network.print_weights(0);
-	//Network.print_biases(0);
-	//Network.print_weights(1);
-	//Network.print_biases(1);
+	Network.populate(0.0, 1.0);
 
 	Network.SGD(train_data, 30, 10, 3.0, &test_data);
 	
