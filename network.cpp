@@ -1,5 +1,7 @@
 #include <iostream>
 #include <vector>
+#include <chrono>
+#include <Eigen/Dense>
 #include "network.h"
 #include "algorithm"
 #include "random"
@@ -9,29 +11,19 @@ network::network(std::vector<int> layers_vec)
 {
 	layers = layers_vec;
 
-	// Initialize weights tensor for network
+	// Initialize weights matrices for network
 	// weights[i][j][k] is a weight from previuos layer k'th neuron 
 	// incoming to j'th neuron in i'th layer
 	for (int i = 1; i < layers.size(); i++)
 	{
-		std::vector<std::vector<float>> matrix;
-
-		for (int j = 0; j < layers[i]; j++)
-		{
-			std::vector<float> row(layers[i - 1], 0);
-			matrix.push_back(row);
-		}
-
-		weights.push_back(matrix);
+		weights.push_back(Eigen::MatrixXf(layers[i], layers[i - 1]));
 	}
 
-	// Initialize biases matrix b[i][j], bias of j'th neuron in i'th layer
+	// Initialize biases vectors b[i][j], bias of j'th neuron in i'th layer
 	for (int i = 1; i < layers.size(); i++)
 	{
-		std::vector<float> column(layers[i], 0);
-		biases.push_back(column);
+		biases.push_back(Eigen::VectorXf(layers[i]));
 	}
-
 }
 
 void network::populate(float min, float max)
@@ -43,59 +35,29 @@ void network::populate(float min, float max)
 	// populate weights
 	for (int i = 0; i < weights.size(); i++)
 	{
-		for (int j = 0; j < weights[i].size(); j++)
-		{
-			for (int k = 0; k < weights[i][j].size(); k++)
-			{
-				weights[i][j][k] = dist(eng);
-			}
-		}
+		for (auto& x : weights[i].reshaped()) x = dist(eng);
 	}
 
 	// populate biases
 	for (int i = 0; i < biases.size(); i++)
 	{
-		for (int j = 0; j < biases[i].size(); j++)
-		{
-			biases[i][j] = dist(eng);
-		}
+		for (auto& x : biases[i]) x = dist(eng);
 	}
 }
 
-std::vector<float> network::feedforward(const std::vector<float>& input)
+Eigen::VectorXf network::feedforward(const Eigen::VectorXf& input)
 {
-	std::vector<float> a = input;
+	Eigen::VectorXf a = input;
 
 	// Go through each layer in network, i'th layer
-	for (int i = 0; i < biases.size(); i++)
+	for (int i = 0; i < layers.size() - 1; i++)
 	{
-		std::vector<float> buff;
-
-		// Go through each neuron in a layer, j'th neuron
-		for (int j = 0; j < biases[i].size(); j++)
-		{
-			float dot_prod = 0;
-
-			if (a.size() != weights[i][j].size())
-			{
-				throw "Feedforward error! Input size not equal weights";
-			}
-
-			// Go through j'th neuron's weights corresponding to the input 
-			// from the previous layer neuron, k'th neuron
-			for (int k = 0; k < weights[i][j].size(); k++)
-			{
-				dot_prod += a[k] * weights[i][j][k];
-			}
-			float z = dot_prod + biases[i][j];
-			buff.push_back(sigmoid(z));
-		}
-		a = buff;
+		a = (weights[i] * a + biases[i]).unaryExpr(&sigmoid);
 	}
 	return a;
 }
 
-void network::SGD(std::vector<dataUnit>& train_data, int epochs, int mini_batch_size, float eta, const std::vector<dataUnit>* test_data)
+void network::SGD(std::vector<DataSample>& train_data, int epochs, int mini_batch_size, float eta, const std::vector<DataSample>* test_data)
 {
 	
 	int n_test = test_data ? test_data->size() : 0;
@@ -103,19 +65,17 @@ void network::SGD(std::vector<dataUnit>& train_data, int epochs, int mini_batch_
 	int n = train_data.size();
 	for (int i = 0; i < epochs; i++)
 	{
+		auto start = std::chrono::high_resolution_clock::now();
+
 		std::default_random_engine eng;
 		std::shuffle(train_data.begin(), train_data.end(), eng);
 
-		std::vector<std::vector<dataUnit>> mini_batches;
+		std::vector<std::vector<DataSample>> mini_batches;
+		mini_batches.reserve(n / mini_batch_size);
 
 		for (int j = 0; j < n / mini_batch_size; j++)
 		{
-			std::vector<dataUnit> mini_batch;
-			for (int k = 0; k < mini_batch_size; k++)
-			{
-				mini_batch.push_back(train_data[k + mini_batch_size * j]);
-			}
-			mini_batches.push_back(mini_batch);
+			mini_batches.push_back(slice(train_data, j * mini_batch_size, j * mini_batch_size + mini_batch_size));
 		}
 
 		for (int j = 0; j < mini_batches.size(); j++)
@@ -123,18 +83,22 @@ void network::SGD(std::vector<dataUnit>& train_data, int epochs, int mini_batch_
 			update_mini_batch(mini_batches[j], eta);
 		}
 
+		auto end = std::chrono::high_resolution_clock::now();
+
+		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()/1000000.0;
+
 		if (test_data)
 		{
-			printf("Epoch %i: %i / %i\n", i, evaluate(*test_data), n_test);
+			printf("Epoch %i: %i / %i took %f sec\n", i, evaluate(*test_data), n_test, duration);
 		}
 		else
 		{
-			printf("Epoch %i complete\n", i);
+			printf("Epoch %i complete took %f sec\n", i, duration);
 		}
 	}
 }
 
-void network::update_mini_batch(const std::vector<dataUnit>& mini_batch, float eta)
+void network::update_mini_batch(const std::vector<DataSample>& mini_batch, float eta)
 {
 	// create buffers for weights' and biases' nablas
 	auto nabla_b = create_shape(biases);
@@ -143,155 +107,95 @@ void network::update_mini_batch(const std::vector<dataUnit>& mini_batch, float e
 	for (int i = 0; i < mini_batch.size(); i++)
 	{
 		auto delta_nabla = backpropagate(mini_batch[i]);
-		add(nabla_b, delta_nabla.first);
-		add(nabla_w, delta_nabla.second);
+		for (int i = 0; i < nabla_b.size(); i++)
+		{
+			nabla_b[i] += delta_nabla.first[i];
+			nabla_w[i] += delta_nabla.second[i];
+		}
 	}
 
 	// update weights
 	for (int i = 0; i < weights.size(); i++)
 	{
-		for (int j = 0; j < weights[i].size(); j++)
-		{
-			for (int k = 0; k < weights[i][j].size(); k++)
-			{
-				weights[i][j][k] = weights[i][j][k] - (eta / mini_batch.size()) * nabla_w[i][j][k];
-			}
-		}
+		weights[i] -= (eta / mini_batch.size()) * nabla_w[i];
 	}
 
 	// update biases
 	for (int i = 0; i < biases.size(); i++)
 	{
-		for (int j = 0; j < biases[i].size(); j++)
-		{
-			biases[i][j] = biases[i][j] - (eta / mini_batch.size()) * nabla_b[i][j];
-		}
+		biases[i] -= (eta / mini_batch.size()) * nabla_b[i];
 	}
 
 }
 
-std::pair<std::vector<biasesVec>, std::vector<weightMatrix>> network::backpropagate(const dataUnit& train_data)
+std::pair<std::vector<Eigen::VectorXf>, std::vector<Eigen::MatrixXf>> network::backpropagate(const DataSample& train_data)
 {
 	// create buffers for weights' and biases' nablas
 	auto nabla_b = create_shape(biases);
 	auto nabla_w = create_shape(weights);
 
-	std::vector<float> activation = train_data.second;
-	std::vector<std::vector<float>> activations; // vector to store all activations vectors
+	Eigen::VectorXf activation = train_data.image;
+	std::vector<Eigen::VectorXf> activations; // vector to store all activations vectors
 	activations.push_back(activation);
 
-	std::vector<std::vector<float>> zs; // vector to store all the weighted inputs vectors
+	std::vector<Eigen::VectorXf> zs; // vector to store all the weighted inputs vectors
 
 	// feedforward
-	for (int i = 0; i < biases.size(); i++)
+	for (int i = 0; i < layers.size() - 1; i++)
 	{
-		std::vector<float> z;
-		for (int j = 0; j < biases[i].size(); j++)
-		{
-			float wa = 0; // weight matrix and output vector dot product 
-			for (int k = 0; k < weights[i][j].size(); k++)
-			{
-				wa += weights[i][j][k] * activation[k]; // calculates dot product of weights and activations
-			}
-			z.push_back(wa + biases[i][j]); // fills the vector with weighted input for a j'th neuron in i'th layer
-		}
-		zs.push_back(z);
-		std::vector<float> current_activation;
-		current_activation.reserve(z.size());
+		Eigen::VectorXf z;
 
-		for (int j = 0; j < z.size(); j++)
-		{
-			current_activation.push_back(sigmoid(z[j]));
-		}
-		activation = current_activation;
+		z = weights[i] * activation + biases[i];
+
+		zs.push_back(z);
+
+		activation = z.unaryExpr(&sigmoid);
+
 		activations.push_back(activation);
 	}
 
 	// backward pass
-	std::vector<float> delta;
-	delta.reserve(activations.back().size());
-	for (int i = 0; i < activations.back().size(); i++)
-	{
-		delta.push_back(cost_deriv(activations.back()[i], train_data.first[i]) * sigmoid_deriv(zs.back()[i]));
-	}
+	Eigen::VectorXf delta;
+
+	delta = cost_deriv(activations.back(), train_data.label).array() * zs.back().unaryExpr(&sigmoid_deriv).array();
 	
-	for (int i = 0; i < nabla_b.back().size(); i++)
-	{
-		nabla_b.back()[i] = delta[i];
-	}
-
-	for (int i = 0; i < nabla_w.back().size(); i++)
-	{
-		for (int j = 0; j < nabla_w.back()[i].size(); j++)
-		{
-			nabla_w.back()[i][j] = delta[i] * activations[activations.size() - 2][j];
-		}
-	}
-
+	nabla_b.back() = delta;
+	
+	nabla_w.back() = delta * activations[activations.size() - 2].transpose();
+	
+	// variable i in the loop corresponds to 
+	// the i'th index from the end of the vectors
 	for (int i = 2; i < layers.size(); i++)
 	{
-		std::vector<float> z = zs[zs.size() - i];
-		std::vector<float> sp;
-		sp.reserve(z.size());
+		Eigen::VectorXf z = zs[zs.size() - i];
 
-		for (int j = 0; j < z.size(); j++)
-		{
-			sp.push_back(sigmoid_deriv(z[j]));
-		}
+		Eigen::VectorXf sp = z.unaryExpr(&sigmoid_deriv);
 
-		std::vector<float> new_delta;
-		new_delta.reserve(sp.size());
+		delta = (weights[weights.size() - i + 1].transpose() * delta).array() * sp.array();
 
-		for (int j = 0; j < biases[biases.size() - i].size(); j++)
-		{
-			float wd = 0;
-			for (int k = 0; k < delta.size(); k++)
-			{
-				wd += weights[weights.size() - i + 1][k][j] * delta[k];
-			}
-			new_delta.push_back(wd * sp[j]);
-		}
-
-		delta = new_delta;
-
-		for (int j = 0; j < nabla_b[nabla_b.size() - i].size(); j++)
-		{
-			nabla_b[nabla_b.size() - i][j] = delta[j];
-		}
-
-		for (int j = 0; j < nabla_w[nabla_w.size() - i].size(); j++)
-		{
-			for (int k = 0; k < nabla_w[nabla_w.size() - i][j].size(); k++)
-			{
-				nabla_w[nabla_w.size() - i][j][k] = delta[j] * activations[activations.size() - i - 1][k];
-			}
-		}
+		nabla_b[nabla_b.size() - i] = delta;
+		
+		nabla_w[nabla_w.size() - i] = delta * activations[activations.size() - i - 1].transpose();
 	}
 
 	return std::make_pair(nabla_b, nabla_w);
 
 }
 
-int network::evaluate(const std::vector<dataUnit>& test_data)
+int network::evaluate(const std::vector<DataSample>& test_data)
 {
 	int count = 0;
 	for (int i = 0; i < test_data.size(); i++)
 	{
-		std::vector<float> result(feedforward(test_data[i].second));
-		float rmax = 0;
-		int idx = -1;
-		int label = 0;
-		for (int j = 0; j < result.size(); j++)
-		{
-			if (result[j] > rmax)
-			{
-				rmax = result[j];
-				idx = j;
-			}
+		Eigen::VectorXf result(feedforward(test_data[i].image));
 
-			if (test_data[i].first[j] == 1) label = j;
-		}
-		if (idx == label) count++;
+		int resMax;
+		int testMax;
+
+		result.maxCoeff(&resMax);
+		test_data[i].label.maxCoeff(&testMax);
+
+		if (resMax == testMax) count++;
 	}
 	return count;
 }
@@ -315,17 +219,7 @@ void network::print_weights(int layer)
 	}
 
 	std::cout << "Weights for " << layer << " neuron layer : \n";
-	std::cout << "{\n";
-	for (int i = 0; i < weights[layer].size(); i++)
-	{
-		std::cout << "[ ";
-		for (int j = 0; j < weights[layer][i].size(); j++)
-		{
-			std::cout << weights[layer][i][j] << " ";
-		}
-		std::cout << "],\n";
-	}
-	std::cout << "}\n";
+	std::cout << weights[layer];
 }
 
 void network::print_biases(int layer)
@@ -337,10 +231,6 @@ void network::print_biases(int layer)
 	}
 
 	std::cout << "Biases for " << layer << " neuron layer : \n{\n";
-	for (int i = 0; i < biases[layer].size(); i++)
-	{
-		std::cout << biases[layer][i] << "\n";
-
-	}
-	std::cout << "}\n";
+	
+	std::cout << biases[layer];
 }

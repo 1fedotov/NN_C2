@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <Eigen/Dense>
 
 int swap_bytes(int i)
 {
@@ -17,9 +18,9 @@ int swap_bytes(int i)
 
 //implementation of the MNIST dataset loader
 
-std::vector<std::pair<std::vector<float>, std::vector<float>>> mnist_loader::load(const std::string& train_images_path, const std::string& train_labels_path)
+std::vector<DataSample> mnist_loader::load(const std::string& train_images_path, const std::string& train_labels_path)
 {
-	std::vector<std::pair<std::vector<float>, std::vector<float>>> train_data;
+	std::vector<DataSample> DataSamples;
 
 	std::ifstream train_images(train_images_path, std::ios::binary);
 	std::ifstream train_labels(train_labels_path, std::ios::binary);
@@ -60,27 +61,28 @@ std::vector<std::pair<std::vector<float>, std::vector<float>>> mnist_loader::loa
 		char c;
 		int size = imagesHeader.row_num * imagesHeader.col_num;
 		char* buff = new char[size];
-		train_data.reserve(sizeof(size));
+		DataSamples.reserve(sizeof(size));
 
 		for (int i = 0; i < imagesHeader.items_num; i++)
 		{
 			train_labels.read(&c, sizeof(c));
 			train_images.read(buff, size);
 
-			std::vector<float> label(10, 0);
-			label[int(c)] = 1;
+			DataSample sample;
 
-			std::vector<float> image;
-			image.reserve(size);
+			// vectorize a label value
+			sample.label = Eigen::VectorXf::Zero(10);
+			sample.label(int(c)) = 1;
 
-
+			sample.image.resize(size);
+			// fill the image vector
 			for (int j = 0; j < size; j++)
 			{
 				float f = (float)(unsigned char)buff[j];
-				image.push_back(f/255.0);
+				sample.image(j) = f / 255.0;
 			}
 
-			train_data.push_back(std::make_pair(label, image));
+			DataSamples.push_back(sample);
 		}
 
 		delete[] buff;
@@ -93,5 +95,5 @@ std::vector<std::pair<std::vector<float>, std::vector<float>>> mnist_loader::loa
 	train_images.close();
 	train_labels.close();
 
-	return train_data;
+	return DataSamples;
 }

@@ -8,14 +8,41 @@ float sigmoid_deriv(float z);
 
 float square_error(float y, float x);
 
-float cost_deriv(float a, float y);
+Eigen::VectorXf cost_deriv(Eigen::VectorXf a, Eigen::VectorXf y);
 
 float cross_entropy(float y, float x);
 
-std::vector<weightMatrix> create_shape(std::vector<weightMatrix> weights);
+template <typename T>
+std::vector<T> slice(std::vector<T> const& v, int x, int y)
+{
+	auto begin = v.begin() + x;
+	auto end = v.begin() + y;
 
-std::vector<biasesVec> create_shape(std::vector<biasesVec> biases);
+	return std::vector<T>(begin, end);
+}
 
-void add(std::vector<weightMatrix>& weights1, std::vector<weightMatrix>& weights2);
+template <typename T>
+std::vector<T> create_shape(const std::vector<T>& elements) 
+{
+    std::vector<T> res(elements);
 
-void add(std::vector<biasesVec>& biases1, std::vector<biasesVec>& biases2);
+    for (auto& elem : res) 
+    {
+        for (auto& x : elem.reshaped()) x = 0;
+    }
+
+    return res;
+}
+
+template <typename T>
+void add(std::vector<T>& result, std::vector<T> const& additive)
+{
+    if (result.size() != additive.size()) {
+        throw std::invalid_argument("Vectors must have the same size.");
+    }
+
+    for (int i = 0; i < result.size(); i++)
+    {
+        result[i] += additive[i];
+    }
+}

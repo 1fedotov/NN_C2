@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <Eigen/Dense>
 
 //files structures provided at http://yann.lecun.com/exdb/mnist/
 
@@ -18,10 +19,16 @@ struct LABELS_HEADER
 	int items_num;
 };
 
+struct DataSample
+{
+	Eigen::VectorXf label;
+	Eigen::VectorXf image;
+};
+
 class mnist_loader
 {
 	public:
-		std::vector<std::pair<std::vector<float>, std::vector<float>>> load(const std::string& train_images, const std::string& train_labels);
+		std::vector<DataSample> load(const std::string& train_images, const std::string& train_labels);
 };
 
 
