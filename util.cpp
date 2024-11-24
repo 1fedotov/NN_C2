@@ -4,27 +4,27 @@
 #include <vector>
 #include <Eigen/Dense>
 
-float sigmoid(float z)
+double sigmoid(double z)
 {
 	return 1.0/(1.0 + exp(-z));
 }
 
-float sigmoid_deriv(float z)
+double sigmoid_deriv(double z)
 {
 	return exp(-z)/pow((1 + exp(-z)), 2);
 }
 
-float square_error(float y, float x)
+double square_error(double y, double x)
 {
 	return 0.0f;
 }
 
-Eigen::VectorXf cost_deriv(Eigen::VectorXf a, Eigen::VectorXf y)
+Eigen::VectorXd cost_deriv(Eigen::VectorXd a, Eigen::VectorXd y)
 {
 	return a - y;
 }
 
-float cross_entropy(float y, float x)
+double cross_entropy(double y, double x)
 {
 	return 0.0f;
 }

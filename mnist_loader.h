@@ -21,8 +21,8 @@ struct LABELS_HEADER
 
 struct DataSample
 {
-	Eigen::VectorXf label;
-	Eigen::VectorXf image;
+	Eigen::VectorXd label;
+	Eigen::VectorXd image;
 };
 
 class mnist_loader

@@ -71,15 +71,15 @@ std::vector<DataSample> mnist_loader::load(const std::string& train_images_path,
 			DataSample sample;
 
 			// vectorize a label value
-			sample.label = Eigen::VectorXf::Zero(10);
-			sample.label(int(c)) = 1;
+			sample.label = Eigen::VectorXd::Zero(10);
+			sample.label(int(c)) = 1.0;
 
 			sample.image.resize(size);
 			// fill the image vector
 			for (int j = 0; j < size; j++)
 			{
-				float f = (float)(unsigned char)buff[j];
-				sample.image(j) = f / 255.0;
+				float d = (double)(unsigned char)buff[j];
+				sample.image(j) = d / 255.0;
 			}
 
 			DataSamples.push_back(sample);

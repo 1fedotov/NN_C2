@@ -2,15 +2,15 @@
 #include "network.h"
 #include <vector>
 
-float sigmoid(float z);
+double sigmoid(double z);
 
-float sigmoid_deriv(float z);
+double sigmoid_deriv(double z);
 
-float square_error(float y, float x);
+double square_error(double y, double x);
 
-Eigen::VectorXf cost_deriv(Eigen::VectorXf a, Eigen::VectorXf y);
+Eigen::VectorXd cost_deriv(Eigen::VectorXd a, Eigen::VectorXd y);
 
-float cross_entropy(float y, float x);
+double cross_entropy(double y, double x);
 
 template <typename T>
 std::vector<T> slice(std::vector<T> const& v, int x, int y)

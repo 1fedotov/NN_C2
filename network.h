@@ -19,8 +19,8 @@ class network
 		*/
 
 		std::vector<int> layers;
-		std::vector<Eigen::MatrixXf> weights;
-		std::vector<Eigen::VectorXf> biases;
+		std::vector<Eigen::MatrixXd> weights;
+		std::vector<Eigen::VectorXd> biases;
 
 	public:
 		// Initialize network with weights tensor and biases matrix, all values are 0's
@@ -30,13 +30,13 @@ class network
 		// Populate network's weights and biases with random
 		void populate(float min, float max);
 
-		Eigen::VectorXf feedforward(const Eigen::VectorXf& input);
+		Eigen::VectorXd feedforward(const Eigen::VectorXd& input);
 
-		void SGD(std::vector<DataSample>& train_data, int epochs, int mini_batch_size, float eta, const std::vector<DataSample>* test_data = nullptr);
+		void SGD(std::vector<DataSample>& train_data, int epochs, int mini_batch_size, double eta, const std::vector<DataSample>* test_data = nullptr);
 
-		void update_mini_batch(const std::vector<DataSample>& mini_batch, float eta);
+		void update_mini_batch(const std::vector<DataSample>& mini_batch, double eta);
 
-		std::pair<std::vector<Eigen::VectorXf>, std::vector<Eigen::MatrixXf>> backpropagate(const DataSample& train_data);
+		std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::MatrixXd>> backpropagate(const DataSample& train_data);
 
 		int evaluate(const std::vector<DataSample>& test_data);
 

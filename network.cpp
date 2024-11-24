@@ -16,13 +16,13 @@ network::network(std::vector<int> layers_vec)
 	// incoming to j'th neuron in i'th layer
 	for (int i = 1; i < layers.size(); i++)
 	{
-		weights.push_back(Eigen::MatrixXf(layers[i], layers[i - 1]));
+		weights.push_back(Eigen::MatrixXd(layers[i], layers[i - 1]));
 	}
 
 	// Initialize biases vectors b[i][j], bias of j'th neuron in i'th layer
 	for (int i = 1; i < layers.size(); i++)
 	{
-		biases.push_back(Eigen::VectorXf(layers[i]));
+		biases.push_back(Eigen::VectorXd(layers[i]));
 	}
 }
 
@@ -30,7 +30,7 @@ void network::populate(float min, float max)
 {
 	std::random_device rd;
 	std::default_random_engine eng(rd());
-	std::normal_distribution<float> dist(0.0, 1.0);
+	std::normal_distribution<double> dist(0.0, 1.0);
 
 	// populate weights
 	for (int i = 0; i < weights.size(); i++)
@@ -45,9 +45,9 @@ void network::populate(float min, float max)
 	}
 }
 
-Eigen::VectorXf network::feedforward(const Eigen::VectorXf& input)
+Eigen::VectorXd network::feedforward(const Eigen::VectorXd& input)
 {
-	Eigen::VectorXf a = input;
+	Eigen::VectorXd a = input;
 
 	// Go through each layer in network, i'th layer
 	for (int i = 0; i < layers.size() - 1; i++)
@@ -57,7 +57,7 @@ Eigen::VectorXf network::feedforward(const Eigen::VectorXf& input)
 	return a;
 }
 
-void network::SGD(std::vector<DataSample>& train_data, int epochs, int mini_batch_size, float eta, const std::vector<DataSample>* test_data)
+void network::SGD(std::vector<DataSample>& train_data, int epochs, int mini_batch_size, double eta, const std::vector<DataSample>* test_data)
 {
 	
 	int n_test = test_data ? test_data->size() : 0;
@@ -98,7 +98,7 @@ void network::SGD(std::vector<DataSample>& train_data, int epochs, int mini_batc
 	}
 }
 
-void network::update_mini_batch(const std::vector<DataSample>& mini_batch, float eta)
+void network::update_mini_batch(const std::vector<DataSample>& mini_batch, double eta)
 {
 	// create buffers for weights' and biases' nablas
 	auto nabla_b = create_shape(biases);
@@ -128,54 +128,54 @@ void network::update_mini_batch(const std::vector<DataSample>& mini_batch, float
 
 }
 
-std::pair<std::vector<Eigen::VectorXf>, std::vector<Eigen::MatrixXf>> network::backpropagate(const DataSample& train_data)
+std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::MatrixXd>> network::backpropagate(const DataSample& train_data)
 {
 	// create buffers for weights' and biases' nablas
 	auto nabla_b = create_shape(biases);
 	auto nabla_w = create_shape(weights);
 
-	Eigen::VectorXf activation = train_data.image;
-	std::vector<Eigen::VectorXf> activations; // vector to store all activations vectors
+	Eigen::VectorXd activation = train_data.image;
+	std::vector<Eigen::VectorXd> activations; // vector to store all activations vectors
 	activations.push_back(activation);
 
-	std::vector<Eigen::VectorXf> zs; // vector to store all the weighted inputs vectors
+	std::vector<Eigen::VectorXd> zs; // vector to store all the weighted inputs vectors
 
 	// feedforward
 	for (int i = 0; i < layers.size() - 1; i++)
 	{
-		Eigen::VectorXf z;
+		Eigen::VectorXd z;
 
-		z = weights[i] * activation + biases[i];
+		z = (weights[i] * activation + biases[i]).eval();
 
 		zs.push_back(z);
 
-		activation = z.unaryExpr(&sigmoid);
+		activation = z.unaryExpr(&sigmoid).eval();
 
 		activations.push_back(activation);
 	}
 
 	// backward pass
-	Eigen::VectorXf delta;
+	Eigen::VectorXd delta;
 
-	delta = cost_deriv(activations.back(), train_data.label).array() * zs.back().unaryExpr(&sigmoid_deriv).array();
+	delta = (cost_deriv(activations.back(), train_data.label).array() * zs.back().unaryExpr(&sigmoid_deriv).array()).eval();
 	
 	nabla_b.back() = delta;
 	
-	nabla_w.back() = delta * activations[activations.size() - 2].transpose();
+	nabla_w.back() = (delta * activations[activations.size() - 2].transpose()).eval();
 	
 	// variable i in the loop corresponds to 
 	// the i'th index from the end of the vectors
 	for (int i = 2; i < layers.size(); i++)
 	{
-		Eigen::VectorXf z = zs[zs.size() - i];
+		Eigen::VectorXd z = zs[zs.size() - i];
 
-		Eigen::VectorXf sp = z.unaryExpr(&sigmoid_deriv);
+		Eigen::VectorXd sp = z.unaryExpr(&sigmoid_deriv).eval();
 
-		delta = (weights[weights.size() - i + 1].transpose() * delta).array() * sp.array();
+		delta = ((weights[weights.size() - i + 1].transpose() * delta).eval().array() * sp.array()).eval();
 
 		nabla_b[nabla_b.size() - i] = delta;
 		
-		nabla_w[nabla_w.size() - i] = delta * activations[activations.size() - i - 1].transpose();
+		nabla_w[nabla_w.size() - i] = (delta * activations[activations.size() - i - 1].transpose()).eval();
 	}
 
 	return std::make_pair(nabla_b, nabla_w);
@@ -187,7 +187,7 @@ int network::evaluate(const std::vector<DataSample>& test_data)
 	int count = 0;
 	for (int i = 0; i < test_data.size(); i++)
 	{
-		Eigen::VectorXf result(feedforward(test_data[i].image));
+		Eigen::VectorXd result(feedforward(test_data[i].image));
 
 		int resMax;
 		int testMax;
